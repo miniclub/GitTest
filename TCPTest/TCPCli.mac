@@ -1,0 +1,35 @@
+ROUTINE TCPCli
+main(host="localhost",n=1) public {
+	if n>1 {
+		for i=2:1:n {
+			job Comm(host)
+		}
+	}
+	do Comm(host)
+}
+Comm(host="localhost") public {
+	set num=0
+	set tcp="|TCP|2"
+	for {
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" Open"
+		open tcp:(host:15000:"M"):10
+		if '$test {
+			set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" failed to open"
+			hang 1
+			continue
+		}
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" COMM send"
+		use tcp write "COMMAND-"_$job_":"_$I(num),!
+
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" COMM receive"
+		use tcp read data:30
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" COMM receive"_$s($test:"success",1:"failure")		
+		
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" COMM disconnect"
+		close tcp
+		
+		set ^mina($I(^mina))=$zdt($horolog)_" "_$job_" waiting"
+		
+		hang 1+$r(5)
+	}
+}

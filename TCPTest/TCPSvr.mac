@@ -1,0 +1,63 @@
+ROUTINE TCPSvr
+Server() public {
+	set TCPDev="|TCP|15000"
+	open TCPDev:(:15000:"ACS":$c(13,10):32768:32768):10
+	set TCPReadZH=$zh
+
+	for {
+		
+		use TCPDev read X:10 ;STOP flag check
+ 		
+ 	 	if $test {
+	 		set ReadWaitElapse=($zh-TCPReadZH) ;wait for Read
+			set TCPSvrZH=$zh
+
+			Job TCPJob:(:5:TCPDev:TCPDev):10 ;start child process
+ 			
+ 			set JobElapse=($zh-TCPSvrZH),
+ 				JobTest=$test,
+ 				JobZA=$za
+ 			
+ 			if JobTest,JobZA\8192#2=0 { ; JobZA\8192#2=0  got communication info(=0)
+	 			set ^mina($I(^mina))=$zdt($h)_" startup"
+	 		}
+	 		else {
+	 			set ^mina($I(^mina))=$zdt($h)_" error"
+			 	if '$ZUTIL(189) quit ;disconnected
+	 			set ^mina($I(^mina))=$zdt($h)_" online"
+	 			write "ERR",$C(13,10)
+	 			write *-3
+	 			
+	 			if $zu(189) {
+		 			write *-2
+	 				set ^mina($I(^mina))=$zdt($h)_"offline"
+	 			}
+ 			}
+	 		set TCPReadZH=$zh
+		} else {
+	 		set ^mina($I(^mina))=$zdt($h)_" Listen timeout"
+	 			
+	 		if $zu(189) {
+		 		write *-2
+	 			set ^mina($I(^mina))=$zdt($h)_"Disconnect"
+	 		}
+		}
+	 	
+ 	}
+	
+}
+ ; Send-Receive
+TCPJob() public {
+	set dev=$p use dev:(::"M":$c(10))
+	set ^mina($I(^mina))=$zdt($h)_" "_$J_":start for reading"
+	use dev read cmd:5
+	if '$test set ^mina($I(^mina))=$zdt($h)_" "_$J_":timeout of reading ("_$get(cmd)_")"
+	set ^mina($I(^mina))=$zdt($h)_" "_$J_":start to read"
+	write "HELLO:"_^mina,!
+
+	set ^mina($I(^mina))=$zdt($h)_" "_$J_":Disconnect"
+	write *-3
+	set ^mina($I(^mina))=$zdt($h)_" "_$J_":exit"
+	quit
+	
+}
