@@ -3,7 +3,7 @@ Server() public {
 	set TCPDev="|TCP|15000"
 	open TCPDev:(:15000:"ACS":$c(13,10):32768:32768):10
 	set TCPReadZH=$zh
-
+   set ka=11
 	for {
 		
 		use TCPDev read X:10 ;STOP flag check
